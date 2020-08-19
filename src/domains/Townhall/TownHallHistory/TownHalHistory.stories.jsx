@@ -5,7 +5,7 @@ import FixtureContext, { makeSuccessFixture } from 'mock/Fixtures';
 import Component from '.';
 import InboxIcon from '@material-ui/icons/Inbox';
 import DraftsIcon from '@material-ui/icons/Drafts';
-import { ActionStep } from './ActionHistory';
+import { ActionStep } from './TownHallHistory';
 
 export default { title: 'Domains/Townhall' };
 
