@@ -41,30 +41,36 @@ describe('LoginForm', () => {
         });
 
         // find fields
-        const usernameNode = document.querySelector(
-            '#username'
-        ) as HTMLInputElement;
+        const emailNode = document.querySelector('#email') as HTMLInputElement;
         const passwordNode = document.querySelector(
             '#password'
         ) as HTMLInputElement;
 
         // expect them to be initially empty
-        expect(usernameNode.value).toBe('');
+        expect(emailNode.value).toBe('');
         expect(passwordNode.value).toBe('');
 
         // change the fields
         ReactTestUtils.act(() => {
-            ReactTestUtils.Simulate.change(usernameNode, {
-                target: ({ value: 'username' } as unknown) as EventTarget,
+            ReactTestUtils.Simulate.change(emailNode, {
+                target: ({
+                    value: 'email',
+                } as unknown) as EventTarget,
             });
+        });
+
+        ReactTestUtils.act(() => {
             ReactTestUtils.Simulate.change(passwordNode, {
-                target: ({ value: 'password' } as unknown) as EventTarget,
+                target: ({
+                    value: 'password',
+                } as unknown) as EventTarget,
             });
         });
 
         // expect them to reflect the changed values
         expect(passwordNode.value).toBe('password');
-        expect(usernameNode.value).toBe('username');
+        // console.log(emailNode);
+        expect(emailNode.value).toBe('email');
     });
 
     it('should call handleSubmit & onSuccess appropriately', async () => {
@@ -78,9 +84,30 @@ describe('LoginForm', () => {
             render(<LoginForm onSuccess={onSuccess} />, container);
         });
 
+        const emailNode = document.querySelector('#email') as HTMLInputElement;
+        const passwordNode = document.querySelector(
+            '#password'
+        ) as HTMLInputElement;
         const button = document.querySelector(
             '[type="submit"]'
         ) as HTMLButtonElement;
+
+        // change the fields
+        ReactTestUtils.act(() => {
+            ReactTestUtils.Simulate.change(emailNode, {
+                target: ({
+                    value: 'email@email.com',
+                } as unknown) as EventTarget,
+            });
+        });
+
+        ReactTestUtils.act(() => {
+            ReactTestUtils.Simulate.change(passwordNode, {
+                target: ({
+                    value: 'password',
+                } as unknown) as EventTarget,
+            });
+        });
 
         // click button
         ReactTestUtils.act(() => {
@@ -93,7 +120,7 @@ describe('LoginForm', () => {
             2. onSuccess is waiting for login to resolve
          */
         expect(onSuccess).not.toBeCalled();
-        expect(API.login).toBeCalledWith('', '');
+        expect(API.login).toBeCalledWith('email@email.com', 'password');
         jest.runAllTimers();
 
         // let useEffect handle changes due to login request resolving
@@ -106,7 +133,7 @@ describe('LoginForm', () => {
         expect(onSuccess).toBeCalled();
     });
 
-    it('should fail in calling onSuccess if status is not 2**', async () => {
+    it('should fail in calling onSuccess if status is not 2xx', async () => {
         const onSuccess = jest.fn();
         const rejectedVal = { status: 500 };
         const loginSpy = jest
@@ -119,11 +146,30 @@ describe('LoginForm', () => {
             render(<LoginForm onSuccess={onSuccess} />, container);
         });
 
+        // find fields
+        const emailNode = document.querySelector('#email') as HTMLInputElement;
+        const passwordNode = document.querySelector(
+            '#password'
+        ) as HTMLInputElement;
         const button = document.querySelector(
             '[type="submit"]'
         ) as HTMLButtonElement;
 
-        // click button
+        // change the fields
+        ReactTestUtils.act(() => {
+            ReactTestUtils.Simulate.change(emailNode, {
+                target: ({
+                    value: 'email@email.com',
+                } as unknown) as EventTarget,
+            });
+        });
+
+        ReactTestUtils.act(() => {
+            ReactTestUtils.Simulate.change(passwordNode, {
+                target: ({ value: 'password' } as unknown) as EventTarget,
+            });
+        });
+
         ReactTestUtils.act(() => {
             button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
@@ -134,7 +180,7 @@ describe('LoginForm', () => {
             2. onSuccess is waiting for login to resolve
          */
         expect(onSuccess).not.toBeCalled();
-        expect(API.login).toBeCalledWith('', '');
+        expect(API.login).toBeCalledWith('email@email.com', 'password');
         jest.runAllTimers();
 
         // let useEffect handle changes due to login request resolving

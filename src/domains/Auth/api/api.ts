@@ -1,33 +1,31 @@
+import type { User, ForgotPassForm, ForgotPassRequestForm, RegisterForm } from 'prytaneum-typings';
+
 import axios from 'utils/axios';
 import errors from 'utils/errors';
-import * as AuthTypes from '../types';
 
-export async function login(username?: string, password?: string) {
-    if (!username || !password) {
+/** Function to POST to /api/users/login if email is valid
+ *  @category Domains/Auth
+ *  @constructor login
+ *  @param {string} email the email to login with
+ *  @param {string} password the password to try to login with username
+ */
+export async function login(email?: string, password?: string) {
+    if (!email || !password) {
         throw errors.fieldError();
     }
     // check if valid
-    if (!username.match(/\w+/g) || !password.match(/\w+/g)) {
+    if (!email.match(/\w+/g) || !password.match(/\w+/g)) {
         throw errors.fieldError();
     }
     return axios.post('/api/users/login', {
-        username,
+        email,
         password,
-    });
-}
-
-export async function loginTemp(username: string) {
-    if (!username.match(/\w+/g)) {
-        throw errors.fieldError();
-    }
-    return axios.post('/api/users/login-temporary', {
-        username,
     });
 }
 
 export async function forgotPassReset(
     token: string | unknown,
-    form: AuthTypes.ForgotPassForm
+    form: ForgotPassForm
 ) {
     const { password, confirmPassword } = form;
 
@@ -49,7 +47,12 @@ export async function forgotPassReset(
     });
 }
 
-export async function forgotPassRequest(form: AuthTypes.ForgotPassRequestForm) {
+/** Function to request a password reset
+ *  @category Domains/Auth
+ *  @constructor forgotPassRequest
+ *  @param {ForgotPassForm} form the form to submit the reset through
+ */
+export async function forgotPassRequest(form: ForgotPassRequestForm) {
     if (!form.email) {
         throw errors.fieldError();
     }
@@ -60,10 +63,15 @@ export async function forgotPassRequest(form: AuthTypes.ForgotPassRequestForm) {
     return axios.post('/api/users/request-password-reset', { form });
 }
 
-export async function register(form: AuthTypes.RegisterForm) {
-    const { username, password, email, confirmPassword } = form;
+/** Function to register a new user, pulls the data from the form, checks if its valid, then returns either a POST, or an error if something is invalid
+ *  @category Domains/Auth
+ *  @constructor register
+ *  @param {RegisterForm} form the form to submit the new user registration through
+ */
+export async function register(form: RegisterForm) {
+    const { password, email, confirmPassword } = form;
 
-    if (!username || !password || !email || !confirmPassword) {
+    if (!password || !email || !confirmPassword) {
         throw errors.fieldError();
     }
 
@@ -78,9 +86,23 @@ export async function register(form: AuthTypes.RegisterForm) {
     return axios.post('/api/users/register', { form });
 }
 
+/** Function to confirm user from email
+ *  @category Domains/Auth
+ *  @constructor verifyEmail
+ *  @param {string} userId the userId to check
+ */
 export async function verifyEmail(userId: string) {
     if (!userId) {
         throw errors.invalidInfo();
     }
     return axios.post('/api/confirm/user-email', { userId });
+}
+
+export async function getMyInfo() {
+    // gets user info from the token in header
+    return axios.get<User>('/api/users/me');
+}
+
+export async function logout() {
+    return axios.get('/api/users/logout');
 }

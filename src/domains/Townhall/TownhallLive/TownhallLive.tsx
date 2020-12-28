@@ -1,137 +1,113 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Divider, AppBar, Tabs, Tab, Grid } from '@material-ui/core';
-import { useRouteMatch, Route, Switch, Link, Redirect } from 'react-router-dom';
+import { Grid, useMediaQuery, useTheme } from '@material-ui/core';
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 
-import Paper from 'components/Paper';
+import Fab from 'components/Fab';
 import VideoPlayer from 'components/VideoPlayer';
-import { DeviceContext } from 'contexts/Device';
-import { TownhallContext } from '../Contexts/Townhall';
-import MyQuestions from '../MyQuestions';
+import PaneProvider from '../Contexts/Pane';
+import TownhallPanes from '../TownhallPanes';
 
-function TownhallLiveTabs({ url }: { url: string }) {
-    const { params } = useRouteMatch<{ tab: string }>();
-    const { tab } = params;
-
-    return (
-        <div>
-            <AppBar position='static' color='transparent' elevation={0}>
-                <Tabs value={tab} variant='fullWidth'>
-                    <Tab
-                        value='my-questions'
-                        label='My Questions'
-                        component={Link}
-                        to={`${url}/my-questions`}
-                    />
-                    <Tab
-                        value='all-questions'
-                        label='All Questions'
-                        component={Link}
-                        to={`${url}/all-questions`}
-                    />
-                </Tabs>
-                <Divider />
-            </AppBar>
-            <div style={{ overflowX: 'hidden' }}>
-                <Switch>
-                    <Route path={`${url}/my-questions`}>
-                        <MyQuestions />
-                    </Route>
-                    <Route path={`${url}/all-questions`}>
-                        <h1>TODO: all questions feed</h1>
-                    </Route>
-                </Switch>
-            </div>
-        </div>
-    );
-}
-
-function TabRouter() {
-    const { path, url } = useRouteMatch();
-    return (
-        <Switch>
-            <Route path={`${url}/:tab`}>
-                <TownhallLiveTabs url={url} />
-            </Route>
-            <Route path={path} exact>
-                <Redirect to={`${path}/my-questions`} />
-            </Route>
-        </Switch>
-    );
-}
-
-const useMobileStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme) => ({
     root: {
+        height: '100%',
+        width: 'inherit',
+        display: 'flex',
+        flexGrow: 1,
+        [theme.breakpoints.up('md')]: {
+            flexFlow: 'row',
+        },
+        [theme.breakpoints.down('sm')]: {
+            flexFlow: 'column',
+            overflowY: 'auto',
+        },
+    },
+    panes: {
+        [theme.breakpoints.up('md')]: {
+            overflowY: 'scroll',
+            maxHeight: '100%',
+            padding: theme.spacing(2), // TODO: work on spacing with this
+        },
+        [theme.breakpoints.down('sm')]: {
+            minHeight: '100%',
+            paddingTop: theme.spacing(1),
+        },
         width: '100%',
-        height: '100%',
+        display: 'flex',
     },
-    bottom: {
-        paddingBottom: theme.spacing(3),
+    paper: {
+        padding: theme.spacing(2),
+        flex: 1,
     },
-    // button: {
-    //     padding: `0px ${theme.spacing(1)}px 0px ${theme.spacing(1)}px`,
+    descriptionTitle: {
+        flexGrow: 1,
+    },
+    largeAvatar: {
+        width: theme.spacing(7),
+        height: theme.spacing(7),
+    },
+    expand: {
+        transform: 'rotate(180deg)',
+        marginLeft: 'auto',
+        transition: theme.transitions.create('transform', {
+            duration: theme.transitions.duration.shortest,
+        }),
+    },
+    expandOpen: {
+        transform: 'rotate(0deg)',
+    },
+    // saving these for future
+    // sticky: {
+    //     top: 0,
+    //     zIndex: theme.zIndex.appBar,
+    //     position: 'sticky',
+    //     width: '100%',
     // },
-    paper: {
-        paddingBottom: theme.spacing(1),
-        borderRadius: '0px',
-        height: '100%',
-    },
 }));
-
-function MobileLive() {
-    const townhall = React.useContext(TownhallContext);
-    const classes = useMobileStyles();
-
-    return (
-        <div className={classes.root}>
-            <Paper className={classes.paper}>
-                <Grid container spacing={0}>
-                    <Grid item xs={12}>
-                        <VideoPlayer url={townhall.url} />
-                    </Grid>
-                    <Grid item xs={12} className={classes.bottom}>
-                        <TabRouter />
-                    </Grid>
-                </Grid>
-            </Paper>
-        </div>
-    );
-}
-
-const useDesktopStyles = makeStyles((theme) => ({
-    paper: {
-        borderRadius: theme.custom.borderRadius,
-        padding: theme.spacing(3),
-    },
-}));
-
-function DesktopLive() {
-    const townhall = React.useContext(TownhallContext);
-    const classes = useDesktopStyles();
-
-    return (
-        <Paper className={classes.paper}>
-            <Grid container spacing={3}>
-                <Grid item xs={12}>
-                    <VideoPlayer url={townhall.url} />
-                </Grid>
-                <Grid item xs={12}>
-                    <TabRouter />
-                </Grid>
-            </Grid>
-        </Paper>
-    );
-}
 
 export default function TownhallLive() {
-    const device = React.useContext(DeviceContext);
+    const classes = useStyles();
+    const topRef = React.useRef<HTMLDivElement | null>(null);
+    const [isFabVisible, setIsFabVisible] = React.useState(false);
+    const theme = useTheme();
+    const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
 
-    switch (device) {
-        case 'desktop':
-            return <DesktopLive />;
-        case 'mobile':
-            return <MobileLive />;
-        default:
-            return <DesktopLive />;
-    }
+    const handleScroll = () => {
+        const top = topRef.current?.getBoundingClientRect()?.top;
+        if (top && top < -100) {
+            setIsFabVisible(true);
+        } else {
+            setIsFabVisible(false);
+        }
+    };
+
+    const handleClick = () => {
+        topRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest',
+        });
+    };
+    // TODO: video url
+    return (
+        <PaneProvider>
+            <div className={classes.root} onScroll={handleScroll}>
+                {!isMdUp && <div ref={topRef} />}
+                <Grid item xs={12} md={8} container direction='column'>
+                    <Grid container item xs='auto'>
+                        <VideoPlayer url='https://youtu.be/h1o0l_dTV_s' />
+                    </Grid>
+                </Grid>
+                <Grid container item xs={12} md={4}>
+                    <div className={classes.panes} onScroll={handleScroll}>
+                        {isMdUp && <div ref={topRef} />}
+                        <TownhallPanes />
+                    </div>
+                </Grid>
+                <Fab onClick={handleClick} zoomProps={{ in: isFabVisible }}>
+                    <KeyboardArrowUpIcon />
+                </Fab>
+            </div>
+        </PaneProvider>
+    );
 }

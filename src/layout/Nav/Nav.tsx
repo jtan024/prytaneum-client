@@ -1,87 +1,145 @@
 import React from 'react';
-import { useParams, useHistory } from 'react-router-dom';
-import PropTypes from 'prop-types';
-
+import {
+    IconButton,
+    Drawer,
+    List,
+    ListItem,
+    ListItemText,
+    Typography,
+    Menu,
+    MenuItem,
+    Tooltip,
+} from '@material-ui/core';
+import { Menu as MenuIcon, AccountCircleOutlined } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
-import Grow from '@material-ui/core/Grow';
-import IconButton from '@material-ui/core/IconButton';
-import BackIcon from '@material-ui/icons/ArrowBack';
+import InvertColorsIcon from '@material-ui/icons/InvertColors';
 
-// import IconButton from '@material-ui/core/IconButton';
-// import MenuIcon from '@material-ui/icons/Menu';
+import { ThemeSelector } from 'contexts/Theme';
+import { get } from 'utils/storage';
+import history from 'utils/history';
+import AppBar from '../AppBar';
 
-import { parseTitle } from '../utils';
+function formatTitle(str: string | undefined): string | undefined {
+    if (!str) {
+        return str;
+    }
+    return str
+        .split('-')
+        .map((word) => {
+            return word.slice(0, 1).toUpperCase() + word.slice(1);
+        })
+        .join(' ');
+}
 
 const useStyles = makeStyles((theme) => ({
-    root: {
-        flexGrow: 1,
-        height: '100%',
-        width: '100%',
-    },
     menuButton: {
         marginRight: theme.spacing(2),
     },
+    drawer: {
+        minWidth: '240px',
+    },
     title: {
         flexGrow: 1,
-        transition: 'inherit 2s ease-in 10s',
-    },
-    main: {
-        width: '100%',
-        flex: 1,
     },
 }));
 
-interface Props {
-    // tabs?: React.ReactNode[] | React.ReactNode;
-    back?: boolean;
-}
-
-interface Params {
-    title?: string;
-}
-
-export default function Nav({ back }: Props) {
-    const { title } = useParams<Params>();
-    const history = useHistory(); // TODO: change this to not use history and instead have my own internal routing?
+export default function Nav() {
+    const [toggle] = React.useContext(ThemeSelector);
+    const [open, setOpen] = React.useState(false);
     const classes = useStyles();
+    const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+    const isLoggedIn = get('isLoggedIn');
+
+    const handleClick = () => setOpen(false);
+
+    const userMenu = (
+        <div>
+            <Tooltip title='Toggle Dark or Light Mode'>
+                <IconButton color='inherit' edge='start' onClick={toggle}>
+                    <InvertColorsIcon />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title='User Menu'>
+                <IconButton
+                    color='inherit'
+                    onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
+                    aria-label='user-menu'
+                    edge='end'
+                >
+                    <AccountCircleOutlined />
+                </IconButton>
+            </Tooltip>
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={() => setAnchorEl(null)}
+                onClick={() => setAnchorEl(null)}
+            >
+                <MenuItem
+                    button
+                    onClick={() => {
+                        history.push('/user/settings');
+                    }}
+                >
+                    <ListItemText primary='Settings' />
+                </MenuItem>
+                <MenuItem
+                    button
+                    onClick={() => {
+                        history.push('/logout');
+                    }}
+                >
+                    <ListItemText primary='Logout' />
+                </MenuItem>
+            </Menu>
+        </div>
+    );
+    const title = (
+        <Typography align='left' variant='h6' noWrap className={classes.title}>
+            {formatTitle('prytaneum')}
+        </Typography>
+    );
+
+    const loggedInBar = (
+        <>
+            <IconButton
+                onClick={() => setOpen(true)}
+                className={classes.menuButton}
+                color='inherit'
+            >
+                <MenuIcon />
+            </IconButton>
+            {title}
+            {userMenu}
+        </>
+    );
 
     return (
-        <div className={classes.root}>
-            <AppBar position='static'>
-                <Toolbar>
-                    {back && (
-                        <Grow in>
-                            <IconButton
-                                onClick={() => history.goBack()}
-                                edge='start'
-                                // className={classes.menuButton}
-                                color='inherit'
-                                aria-label='back-button'
-                            >
-                                <BackIcon />
-                            </IconButton>
-                        </Grow>
-                    )}
-                    <Typography variant='h6' className={classes.title}>
-                        {parseTitle(title)}
-                    </Typography>
-                    <Button color='inherit'>Login</Button>
-                </Toolbar>
-            </AppBar>
+        <div>
+            <AppBar>{isLoggedIn ? loggedInBar : title}</AppBar>
+            {isLoggedIn && (
+                <Drawer
+                    classes={{ paper: classes.drawer }}
+                    open={open}
+                    onClose={() => setOpen(false)}
+                >
+                    <nav>
+                        <List onClick={handleClick}>
+                            <li>
+                                <ListItem
+                                    button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        history.push('/user/my-townhalls');
+                                    }}
+                                >
+                                    <ListItemText primary='My Townhalls' />
+                                </ListItem>
+                            </li>
+                        </List>
+                    </nav>
+                </Drawer>
+            )}
         </div>
     );
 }
-
-Nav.defaultProps = {
-    // tabs: <></>,
-    back: false,
-};
-
-Nav.propTypes = {
-    // tabs: PropTypes.oneOfType([PropTypes.node, PropTypes.array]),
-    back: PropTypes.bool,
-};

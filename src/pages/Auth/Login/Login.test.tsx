@@ -1,16 +1,14 @@
 import React from 'react';
 import { render, unmountComponentAtNode } from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
-import { MemoryRouter, Route } from 'react-router-dom';
-import { ThemeProvider } from '@material-ui/core/styles';
+import ThemeProvider from 'contexts/Theme';
 
-import theme from 'theme';
 import Login from './Login';
 
 jest.mock('hooks/useSnack');
 jest.mock('utils/axios');
 
-describe('Register', () => {
+describe('Login', () => {
     let container: HTMLDivElement | null = null;
 
     beforeEach(() => {
@@ -33,12 +31,8 @@ describe('Register', () => {
     it('should render', () => {
         ReactTestUtils.act(() => {
             render(
-                <ThemeProvider theme={theme}>
-                    <MemoryRouter initialEntries={['/']}>
-                        <Route path='/'>
-                            <Login />
-                        </Route>
-                    </MemoryRouter>
+                <ThemeProvider>
+                    <Login onLogin={() => {}} />
                 </ThemeProvider>,
                 container
             );

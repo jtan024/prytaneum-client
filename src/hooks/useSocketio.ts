@@ -1,14 +1,11 @@
 import React from 'react';
 import io from 'socket.io-client';
+import type { ServerEmits } from 'prytaneum-typings';
 
-type Events =
-    | 'townhall-chat-state'
-    | 'townhall-question-state'
-    | 'townhall-moderator-chat-state';
 interface Settings<T, U> {
     url: string;
     query?: Record<string, string>;
-    event: Events;
+    event: ServerEmits;
     reducer: (a: T, b: U) => T;
     initialState: T;
 }

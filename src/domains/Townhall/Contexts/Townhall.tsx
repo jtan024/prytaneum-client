@@ -1,44 +1,107 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import type { Townhall } from 'prytaneum-typings';
 
 import useEndpoint from 'hooks/useEndpoint';
 import Loader from 'components/Loader';
 import { getTownhall } from '../api';
-import { Townhall } from '../types';
 
 interface Props {
     // TODO: add defaults here
-    // eslint-disable-next-line react/require-default-props
-    value?: Townhall;
+    value?: Townhall; // we may not need this?
     children: JSX.Element | JSX.Element[];
-}
-
-interface Params {
     townhallId: string;
 }
 
 export const TownhallContext = React.createContext<Townhall>({
     _id: '',
-    speaker: {
-        name: '',
-        party: '',
-        territory: '',
+    meta: {
+        createdAt: new Date(),
+        createdBy: {
+            _id: '',
+            name: {
+                first: '',
+                last: '',
+            },
+        },
+        updatedAt: new Date(),
+        updatedBy: {
+            _id: '',
+            name: {
+                first: '',
+                last: '',
+            },
+        },
     },
-    moderator: '',
-    topic: '',
-    picture: '',
-    readingMaterials: '',
-    date: new Date(),
-    url: '',
+    state: {
+        active: false,
+        start: null,
+        end: null,
+        attendees: {
+            max: 0,
+            current: 0,
+        },
+    },
+    form: {
+        title: '',
+        date: new Date(),
+        description: '',
+        // scope: 'district',
+        private: false,
+        // speaker: {
+        //     name: '',
+        //     party: '',
+        //     territory: '',
+        //     picture: '',
+        // },
+        topic: '',
+    },
+    settings: {
+        waitingRoom: {
+            enabled: false,
+            scheduled: null,
+        },
+        chat: {
+            enabled: false,
+            automated: false,
+        },
+        questionQueue: {
+            transparent: false,
+            automated: false,
+        },
+        credits: {
+            enabled: false,
+            list: [],
+        },
+        attachments: {
+            enabled: false,
+            list: [],
+        },
+        moderators: {
+            list: [],
+        },
+        registration: {
+            reminders: {
+                enabled: true,
+                customTimes: [],
+            },
+            registrants: [],
+        },
+        speakers: {
+            list: [],
+        },
+    },
 });
 
-export default function TownhallProvider({ value, children }: Props) {
-    const { townhallId } = useParams<Params>();
+// TODO: optimize this so that a request doesn't get sent every single page load? maybe?
+export default function TownhallProvider({
+    value,
+    children,
+    townhallId,
+}: Props) {
     const [townhall, setTownhall] = React.useState(value);
     const [get] = useEndpoint(() => getTownhall(townhallId), {
         onSuccess: (res) => {
-            const { townhall: fetchedTownhall } = res.data;
-            setTownhall(fetchedTownhall);
+            setTownhall(res.data);
         },
     });
 
@@ -46,7 +109,7 @@ export default function TownhallProvider({ value, children }: Props) {
         if (!townhall) {
             get();
         }
-    }, []);
+    }, [townhall, get]);
 
     return !townhall ? (
         <Loader />
@@ -58,5 +121,5 @@ export default function TownhallProvider({ value, children }: Props) {
 }
 
 TownhallProvider.defaultProps = {
-    value: {},
+    value: undefined,
 };

@@ -1,22 +1,21 @@
 import React from 'react';
-import { Container } from '@material-ui/core';
+import AddIcon from '@material-ui/icons/Add';
 
 import List from 'domains/Townhall/TownhallList';
-import AppBar from 'layout/AppBar';
+import Fab from 'components/Fab';
+import history, { makeRelativeLink } from 'utils/history';
 
 export default function TownhallList() {
     return (
         <>
-            <AppBar />
-            <main>
-                <Container
-                    maxWidth='md'
-                    style={{ width: '100%', height: '100%' }}
-                    disableGutters
-                >
-                    <List />
-                </Container>
-            </main>
+            <List
+                onClickTownhall={(id) =>
+                    history.push(makeRelativeLink(`/${id}`))
+                }
+            />
+            <Fab onClick={() => history.push(makeRelativeLink('/create'))}>
+                <AddIcon />
+            </Fab>
         </>
     );
 }

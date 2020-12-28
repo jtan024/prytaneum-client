@@ -24,15 +24,22 @@ const useStyles = makeStyles((theme: Theme) =>
 interface MemberLabel {
     first_name: string;
     last_name: string;
+    // api request returns json with snake_case
 }
 
 export default function MoCDropdown() {
     const classes = useStyles();
+
     const [chamber, setChamber] = useState('');
-    const [input] = useState('');
+    const [input, setInput] = useState('');
     const [data2, setData2] = useState([]);
+
     const handleChange = (event: ChangeEvent<{ value: unknown }>) => {
         setChamber(event.target.value as string);
+    };
+
+    const nameChange = (event: ChangeEvent<{ value: unknown }>) => {
+        setInput(event.target.value as string);
     };
 
     useEffect(() => {
@@ -40,16 +47,15 @@ export default function MoCDropdown() {
         axios
             .get(url, {
                 headers: {
-                    'X-API-Key': process.env.REACT_APP_PROPUBLICA_API_KEY,
+                    'X-API-Key': process.env.REACT_APP_PROPUBLICA_API_KEY, // FIXME: should be a request to our server rather than a process.env
                 },
             })
             .then((response) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 setData2(response.data.results[0].members);
             })
-            .catch((error) => {
-                console.log(error);
-            });
+            // eslint-disable-next-line no-console
+            .catch(console.error); // FIXME:
     }, [chamber]);
 
     return (
@@ -60,8 +66,11 @@ export default function MoCDropdown() {
                 </InputLabel>
                 <Select
                     labelId='demo-simple-select-helper-label'
-                    id='demo-simple-select-helper'
+                    className='help'
                     value={chamber}
+                    inputProps={{
+                        id: 'selectField',
+                    }}
                     onChange={handleChange}
                 >
                     <MenuItem value='House'>House</MenuItem>
@@ -71,7 +80,7 @@ export default function MoCDropdown() {
             </FormControl>
 
             <Autocomplete
-                id='combo-box-demo'
+                id='optionBox'
                 options={data2 as MemberLabel[]}
                 getOptionLabel={(option) =>
                     `${option.first_name} ${option.last_name}`
@@ -84,6 +93,11 @@ export default function MoCDropdown() {
                         variant='outlined'
                         label='type here'
                         value={input}
+                        onChange={nameChange}
+                        inputProps={{
+                            ...params.inputProps,
+                            id: 'standard-premium',
+                        }}
                     />
                 )}
             />
